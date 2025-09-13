@@ -8,7 +8,6 @@ import mongoose from 'mongoose';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // --- VALIDATE ENVIRONMENT VARIABLES ---
-// THIS SECTION HAS BEEN RESTORED
 if (!process.env.GEMINI_API_KEY) {
   console.error("FATAL ERROR: GEMINI_API_KEY is not defined.");
   process.exit(1);
@@ -77,7 +76,8 @@ const getChatId = (id1, id2) => [id1, id2].sort().join('_');
 // --- LLM INTEGRATION (FIXED) ---
 const getGeminiResponse = async (chatHistory) => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    // THIS IS THE CORRECTED LINE
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
     const historyForSDK = chatHistory.slice(0, -1).map(msg => ({
         role: msg.role,
