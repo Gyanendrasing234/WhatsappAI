@@ -5,15 +5,16 @@ import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import mongoose from 'mongoose';
-import { GoogleGenerativeAI } from "@google-generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // --- VALIDATE ENVIRONMENT VARIABLES ---
+// THIS SECTION HAS BEEN RESTORED
 if (!process.env.GEMINI_API_KEY) {
-  console.error("FATAL ERROR: GEMINI_API_KEY is not defined. Please check your .env file.");
+  console.error("FATAL ERROR: GEMINI_API_KEY is not defined.");
   process.exit(1);
 }
 if (!process.env.MONGO_URI) {
-  console.error("FATAL ERROR: MONGO_URI is not defined. Please check your .env file.");
+  console.error("FATAL ERROR: MONGO_URI is not defined.");
   process.exit(1);
 }
 
@@ -23,7 +24,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: [
-      "https://whatsapp-ai.vercel.app", // Your new Production URL will likely be similar
+      "https://whatsapp-ai.vercel.app",
       "https://whatsapp-8gjvx1ksg-gyanendra-singhs-projects-37973a81.vercel.app",
       "https://whatsapp-ai-delta.vercel.app"
     ],
@@ -35,7 +36,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // --- MIDDLEWARE ---
 app.use(cors({
   origin: [
-    "https://whatsapp-ai.vercel.app", // Your new Production URL will likely be similar
+    "https://whatsapp-ai.vercel.app",
     "https://whatsapp-8gjvx1ksg-gyanendra-singhs-projects-37973a81.vercel.app",
     "https://whatsapp-ai-delta.vercel.app"
   ]
