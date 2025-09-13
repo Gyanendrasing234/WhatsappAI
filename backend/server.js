@@ -5,10 +5,9 @@ import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import mongoose from 'mongoose';
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google-generative-ai";
 
 // --- VALIDATE ENVIRONMENT VARIABLES ---
-// This is a security feature. The server will not start without these keys.
 if (!process.env.GEMINI_API_KEY) {
   console.error("FATAL ERROR: GEMINI_API_KEY is not defined. Please check your .env file.");
   process.exit(1);
@@ -24,6 +23,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: [
+      "https://whatsapp-ai.vercel.app", // Your new Production URL will likely be similar
       "https://whatsapp-8gjvx1ksg-gyanendra-singhs-projects-37973a81.vercel.app",
       "https://whatsapp-ai-delta.vercel.app"
     ],
@@ -35,6 +35,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // --- MIDDLEWARE ---
 app.use(cors({
   origin: [
+    "https://whatsapp-ai.vercel.app", // Your new Production URL will likely be similar
     "https://whatsapp-8gjvx1ksg-gyanendra-singhs-projects-37973a81.vercel.app",
     "https://whatsapp-ai-delta.vercel.app"
   ]
@@ -77,8 +78,6 @@ const getGeminiResponse = async (chatHistory) => {
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-    // The history needs to be in the format the SDK expects.
-    // The last message from the user is what we send.
     const historyForSDK = chatHistory.slice(0, -1).map(msg => ({
         role: msg.role,
         parts: msg.parts
@@ -101,6 +100,19 @@ const getGeminiResponse = async (chatHistory) => {
 };
 
 // --- API ENDPOINTS ---
+app.get('/messages/:user1Id/:user2Id', async (req, res) => {
+  try {
+    const { user1Id, user2Id } = req.params;
+    const chatId = getChatId(user1Id, user2Id);
+    
+    const messages = await Message.find({ chatId }).sort({ timestamp: 'asc' });
+    res.status(200).json(messages);
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    res.status(500).json({ message: "Server error fetching messages." });
+  }
+});
+
 app.post('/register', async (req, res) => {
   try {
     const { name, phone, language = 'en' } = req.body;
@@ -128,7 +140,6 @@ app.get('/users', async (req, res) => {
   }
 });
 
-// This new secure route is for your frontend to call.
 app.post('/ask-ai', async (req, res) => {
   try {
     const { prompt, userId } = req.body;
@@ -136,17 +147,14 @@ app.post('/ask-ai', async (req, res) => {
       return res.status(400).json({ error: "Prompt and userId are required." });
     }
     const chatId = getChatId(userId, 'ai_assistant');
-    // Save user's message
     const userMessage = new Message({ chatId, senderId: userId, receiverId: 'ai_assistant', text: prompt });
     await userMessage.save();
-    // Get history for context
     const history = await Message.find({ chatId }).sort({ timestamp: -1 }).limit(10);
     const chatHistoryForAI = history.reverse().map(msg => ({
       role: msg.senderId === 'ai_assistant' ? 'model' : 'user',
       parts: [{ text: msg.text }]
     }));
     const aiResponseText = await getGeminiResponse(chatHistoryForAI);
-    // Save AI's response
     const aiMessage = new Message({ chatId, senderId: 'ai_assistant', receiverId: userId, text: aiResponseText });
     await aiMessage.save();
     res.json({ response: aiResponseText });
