@@ -23,14 +23,16 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*", // For deployment, change this to your Vercel frontend URL
+    origin: "https://whatsapp-8gjvx1ksg-gyanendra-singhs-projects-37973a81.vercel.app",
     methods: ["GET", "POST"]
   }
 });
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // --- MIDDLEWARE ---
-app.use(cors());
+app.use(cors({
+  origin: "https://whatsapp-8gjvx1ksg-gyanendra-singhs-projects-37973a81.vercel.app"
+}));
 app.use(express.json());
 
 // --- MONGODB CONNECTION ---
@@ -124,7 +126,7 @@ app.get('/users', async (req, res) => {
 app.post('/ask-ai', async (req, res) => {
   try {
     const { prompt, userId } = req.body;
-    if (!prompt || !userId) {
+    if (!prompt || || !userId) {
       return res.status(400).json({ error: "Prompt and userId are required." });
     }
     const chatId = getChatId(userId, 'ai_assistant');
@@ -197,4 +199,3 @@ io.on('connection', (socket) => {
 // --- SERVER LISTENING ---
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-
