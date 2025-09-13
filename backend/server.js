@@ -23,7 +23,10 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://whatsapp-8gjvx1ksg-gyanendra-singhs-projects-37973a81.vercel.app",
+    origin: [
+      "https://whatsapp-8gjvx1ksg-gyanendra-singhs-projects-37973a81.vercel.app",
+      "https://whatsapp-ai-delta.vercel.app"
+    ],
     methods: ["GET", "POST"]
   }
 });
@@ -31,7 +34,10 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // --- MIDDLEWARE ---
 app.use(cors({
-  origin: "https://whatsapp-8gjvx1ksg-gyanendra-singhs-projects-37973a81.vercel.app"
+  origin: [
+    "https://whatsapp-8gjvx1ksg-gyanendra-singhs-projects-37973a81.vercel.app",
+    "https://whatsapp-ai-delta.vercel.app"
+  ]
 }));
 app.use(express.json());
 
@@ -126,7 +132,6 @@ app.get('/users', async (req, res) => {
 app.post('/ask-ai', async (req, res) => {
   try {
     const { prompt, userId } = req.body;
-    // THIS IS THE CORRECTED LINE
     if (!prompt || !userId) {
       return res.status(400).json({ error: "Prompt and userId are required." });
     }

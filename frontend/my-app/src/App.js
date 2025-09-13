@@ -5,7 +5,8 @@ import axios from 'axios';
 // --- Configuration ---
 // Make sure this points to your backend server.
 // If your React app and server are on the same machine, this should work.
-const SERVER_URL = 'https://whatsapppai-2.onrender.com';
+const SERVER_URL = 'https://whatsappai-2.onrender.com';
+                  
 
 // --- Main App Component ---
 function App() {
