@@ -126,7 +126,8 @@ app.get('/users', async (req, res) => {
 app.post('/ask-ai', async (req, res) => {
   try {
     const { prompt, userId } = req.body;
-    if (!prompt || || !userId) {
+    // THIS IS THE CORRECTED LINE
+    if (!prompt || !userId) {
       return res.status(400).json({ error: "Prompt and userId are required." });
     }
     const chatId = getChatId(userId, 'ai_assistant');
