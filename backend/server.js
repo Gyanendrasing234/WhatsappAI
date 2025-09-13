@@ -76,12 +76,11 @@ const getChatId = (id1, id2) => [id1, id2].sort().join('_');
 // --- LLM INTEGRATION (FIXED) ---
 const getGeminiResponse = async (chatHistory) => {
   try {
-    // THIS IS THE CORRECTED LINE
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
     const historyForSDK = chatHistory.slice(0, -1).map(msg => ({
         role: msg.role,
-        parts: msg.parts
+        parts: [{text: msg.parts[0].text}] // Ensure parts is an array of objects with a text property
     }));
 
     const lastMessage = chatHistory[chatHistory.length - 1];
@@ -151,10 +150,15 @@ app.post('/ask-ai', async (req, res) => {
     const userMessage = new Message({ chatId, senderId: userId, receiverId: 'ai_assistant', text: prompt });
     await userMessage.save();
     const history = await Message.find({ chatId }).sort({ timestamp: -1 }).limit(10);
-    const chatHistoryForAI = history.reverse().map(msg => ({
+    let chatHistoryForAI = history.reverse().map(msg => ({
       role: msg.senderId === 'ai_assistant' ? 'model' : 'user',
       parts: [{ text: msg.text }]
     }));
+
+    if (chatHistoryForAI.length > 0 && chatHistoryForAI[0].role !== 'user') {
+      chatHistoryForAI.shift();
+    }
+    
     const aiResponseText = await getGeminiResponse(chatHistoryForAI);
     const aiMessage = new Message({ chatId, senderId: 'ai_assistant', receiverId: userId, text: aiResponseText });
     await aiMessage.save();
@@ -188,10 +192,16 @@ io.on('connection', (socket) => {
       io.to(chatId).emit('receive_message', messageToSave);
       if (receiverId === 'ai_assistant') {
         const history = await Message.find({ chatId }).sort({ timestamp: -1 }).limit(10);
-        const chatHistoryForAI = history.reverse().map(msg => ({
+        let chatHistoryForAI = history.reverse().map(msg => ({
           role: msg.senderId === 'ai_assistant' ? 'model' : 'user',
           parts: [{ text: msg.text }]
         }));
+
+        // THIS IS THE NEW FIX
+        if (chatHistoryForAI.length > 0 && chatHistoryForAI[0].role !== 'user') {
+          chatHistoryForAI.shift(); // Removes the first element if it's from the model
+        }
+
         const aiResponseText = await getGeminiResponse(chatHistoryForAI);
         const aiMessage = new Message({ chatId, senderId: 'ai_assistant', receiverId: senderId, text: aiResponseText });
         await aiMessage.save();
